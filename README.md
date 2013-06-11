@@ -1,3 +1,3 @@
-FooCoin (FOO)
+CraftCoin (CRC)
 
 Blah, blah, blah.

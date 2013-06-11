@@ -37,7 +37,7 @@ Value importprivkey(const Array& params, bool fHelp)
 {
     if (fHelp || params.size() < 1 || params.size() > 2)
         throw runtime_error(
-            "importprivkey <foocoin private key> [label]\n"
+            "importprivkey <craftcoin private key> [label]\n"
             "Adds a private key (as returned by dumpprivkey) to your wallet.");
 
     string strSecret = params[0].get_str();
@@ -74,13 +74,13 @@ Value dumpprivkey(const Array& params, bool fHelp)
 {
     if (fHelp || params.size() != 1)
         throw runtime_error(
-	    "dumpprivkey <foocoin address>\n"
-	    "Reveals the private key corresponding to <foocoin address>.");
+	    "dumpprivkey <craftcoin address>\n"
+	    "Reveals the private key corresponding to <craftcoin address>.");
 
     string strAddress = params[0].get_str();
     CBitcoinAddress address;
     if (!address.SetString(strAddress))
-	throw JSONRPCError(-5, "Invalid FooCoin address");
+	throw JSONRPCError(-5, "Invalid CraftCoin address");
     CKeyID keyID;
     if (!address.GetKeyID(keyID))
         throw JSONRPCError(-3, "Address does not refer to a key");

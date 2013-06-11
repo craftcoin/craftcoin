@@ -1,4 +1,4 @@
-FooCoin 1.0
+CraftCoin 1.0
 
 Copyright (c) 2009-2012 Bitcoin Developers
 Copyright (c) 2011-2012 Litecoin Developers
@@ -13,7 +13,7 @@ cryptographic software written by Eric Young (eay@cryptsoft.com).
 
 Intro
 -----
-FooCoin is a free open source peer-to-peer electronic token system that is
+CraftCoin is a free open source peer-to-peer electronic token system that is
 completely decentralized, without the need for a central server or trusted
 parties.  Users hold the crypto keys to their own money and transact directly
 with each other, with the help of a P2P network to check for double-spending.
@@ -21,14 +21,14 @@ with each other, with the help of a P2P network to check for double-spending.
 
 Setup
 -----
-You need the Qt4 run-time libraries to run foocoin-qt. On Debian or Ubuntu:
+You need the Qt4 run-time libraries to run craftcoin-qt. On Debian or Ubuntu:
   sudo apt-get install libqtgui4
 
 Unpack the files into a directory and run:
- bin/32/foocoin-qt (GUI, 32-bit)
- bin/32/foocoin (headless, 32-bit)
- bin/64/foocoin-qt (GUI, 64-bit)
- bin/64/foocoin (headless, 64-bit)
+ bin/32/craftcoin-qt (GUI, 32-bit)
+ bin/32/craftcoin (headless, 32-bit)
+ bin/64/craftcoin-qt (GUI, 64-bit)
+ bin/64/craftcoin (headless, 64-bit)
 
 
 See the documentation at the bitcoin wiki:
