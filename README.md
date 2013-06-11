@@ -1,3 +1,3 @@
 CraftCoin (CRC)
 
-Blah, blah, blah.
+SEE README
