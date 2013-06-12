@@ -29,7 +29,7 @@ CTxMemPool mempool;
 unsigned int nTransactionsUpdated = 0;
 
 map<uint256, CBlockIndex*> mapBlockIndex;
-uint256 hashGenesisBlock("0x");
+uint256 hashGenesisBlock("0x64a9141746cbbe06c7e1a4b7f2abb968ccdeba66cd67c1add1091b29db00578e");
 static CBigNum bnProofOfWorkLimit(~uint256(0) >> 20); // starting difficulty is 1 / 2^12
 CBlockIndex* pindexGenesisBlock = NULL;
 int nBestHeight = -1;
@@ -1654,9 +1654,9 @@ bool CBlock::SetBestChain(CTxDB& txdb, CBlockIndex* pindexNew)
         }
         if (nUpgraded > 0)
             printf("SetBestChain: %d of last 100 blocks above version %d\n", nUpgraded, CBlock::CURRENT_VERSION);
-	//        if (nUpgraded > 100/2)
+  //        if (nUpgraded > 100/2)
             // strMiscWarning is read by GetWarnings(), called by Qt and the JSON-RPC code to warn the user:
-	//            strMiscWarning = _("Warning: this version is obsolete, upgrade required");
+  //            strMiscWarning = _("Warning: this version is obsolete, upgrade required");
     }
 
     std::string strCmd = GetArg("-blocknotify", "");
@@ -1803,7 +1803,7 @@ bool CBlock::AcceptBlock()
             return DoS(10, error("AcceptBlock() : contains a non-final transaction"));
 
     // Check that the block chain matches the known block chain up to a checkpoint
-	if (!Checkpoints::CheckBlock(nHeight, hash))
+  if (!Checkpoints::CheckBlock(nHeight, hash))
     return DoS(100, error("AcceptBlock() : rejected by checkpoint lockin at %d", nHeight));
 
     // Write block to history file
@@ -1981,7 +1981,7 @@ bool LoadBlockIndex(bool fAllowNew)
         pchMessageStart[1] = 0xc0;
         pchMessageStart[2] = 0xb8;
         pchMessageStart[3] = 0xdb;
-        hashGenesisBlock = uint256("0x6a95cc3a775e3a2becb5cd213370c11989fb78e8b95eae801fd076097c0feb92");
+        hashGenesisBlock = uint256("0x7cf0b15d94c9d693efcadd56dc9ed50fb0120f8293e44807623c9fed06398f1e");
     }
 
     //
@@ -1999,8 +1999,8 @@ bool LoadBlockIndex(bool fAllowNew)
     {
         if (!fAllowNew)
             return false;
-    
-        
+
+
         // Genesis block
         const char* pszTimestamp = "Big Brother Is Watching You #PRISM";
         CTransaction txNew;
@@ -2014,14 +2014,14 @@ bool LoadBlockIndex(bool fAllowNew)
         block.hashPrevBlock = 0;
         block.hashMerkleRoot = block.BuildMerkleTree();
         block.nVersion = 1;
-        block.nTime    = 1370880537; //epochtime
+        block.nTime    = 1371051790; //epochtime
         block.nBits    = 0x1e0ffff0;
-        block.nNonce   = 0;
+        block.nNonce   = 1848112;
 
         if (fTestNet)
         {
-            block.nTime    = 1370880537;
-            block.nNonce   = 1262617;
+            block.nTime    = 1371040850;
+            block.nNonce   = 1521622;
         }
 
         //// debug print
@@ -2031,7 +2031,7 @@ bool LoadBlockIndex(bool fAllowNew)
         assert(block.hashMerkleRoot == uint256("0x71af8a6b906ecef9cf9cb05a593639f6bd2db7cefb9b2ceaed9065b97b01fa35"));
 
         // If genesis block hash does not match, then generate new genesis hash.
-        if (true && block.GetHash() != hashGenesisBlock)
+        if (false && block.GetHash() != hashGenesisBlock)
         {
             printf("Searching for genesis block...\n");
             // This will figure out a valid hash and Nonce if you're
