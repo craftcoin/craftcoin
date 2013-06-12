@@ -1981,7 +1981,7 @@ bool LoadBlockIndex(bool fAllowNew)
         pchMessageStart[1] = 0xc0;
         pchMessageStart[2] = 0xb8;
         pchMessageStart[3] = 0xdb;
-        hashGenesisBlock = uint256("0x6a95cc3a775e3a2becb5cd213370c11989fb78e8b95eae801fd076097c0feb92");
+        hashGenesisBlock = uint256("0x");
     }
 
     //
@@ -2014,21 +2014,21 @@ bool LoadBlockIndex(bool fAllowNew)
         block.hashPrevBlock = 0;
         block.hashMerkleRoot = block.BuildMerkleTree();
         block.nVersion = 1;
-        block.nTime    = 1371001304; //epochtime
+        block.nTime    = 1371040850; //epochtime
         block.nBits    = 0x1e0ffff0;
         block.nNonce   = 0;
 
         if (fTestNet)
         {
-            block.nTime    = 1370880537;
-            block.nNonce   = 1262617;
+            block.nTime    = 1371040850;
+            block.nNonce   = 0;
         }
 
         //// debug print
         printf("%s\n", block.GetHash().ToString().c_str());
         printf("%s\n", hashGenesisBlock.ToString().c_str());
         printf("%s\n", block.hashMerkleRoot.ToString().c_str());
-        assert(block.hashMerkleRoot == uint256("0x71af8a6b906ecef9cf9cb05a593639f6bd2db7cefb9b2ceaed9065b97b01fa35"));
+        assert(block.hashMerkleRoot == uint256("0x"));
 
         // If genesis block hash does not match, then generate new genesis hash.
         if (true && block.GetHash() != hashGenesisBlock)
