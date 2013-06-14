@@ -2,14 +2,14 @@ CraftCoin (CRC)
 
 CraftCoin is a cryptocurrency based on Litecoin. CraftCoin was designed to be a portable in-game currency for 
 Minecraft servers. The currency is used to buy in-game items on minecraft servers, and can be instantly transfered
-to any other Minecraft server that supports CraftCoin. It is the first altcoin to have a purpose other than simply 
-being a clone of BTC/LTC. The reason this coin was made is: Prior to the spike in value of LTC, I ran a successful 
-Minecraft server that used LTC as an in-game currency. The sudden spike in value caused a "bank run" and suddenly 
-people stopped playing on the server due to hyper-inflation. This coin aims to solve this problem, since the value of 
-a CraftCoin will be based on what players are willing to pay for in-game items, rather than being tied to a coin with 
-fluxuating value. CraftCoin is not intended to be a competitor with Bitcoin, Litecoin, or any other currency. Its one 
-and only purpose is simply being a game currency that is protected from wild price swings that cause inflation/deflation
-on minecraft servers, and yet remains portible across any group of servers that wish to adopt the currency.
+to any other Minecraft server that supports CraftCoin.  The reason this coin was made is: Prior to the spike in value 
+of LTC, I ran a successful Minecraft server that used LTC as an in-game currency. The sudden spike in value caused a 
+"bank run" and suddenly people stopped playing on the server due to hyper-inflation. This coin aims to solve this 
+problem, since the value of a CraftCoin will be based on what players are willing to pay for in-game items, rather than
+being tied to a coin with fluxuating value. CraftCoin is not intended to be a competitor with Bitcoin, Litecoin, or 
+any other currency. Its one and only purpose is simply being a game currency that is protected from wild price swings 
+that cause inflation/deflation on minecraft servers, and yet remains portible across any group of servers that wish to
+adopt the currency.
 
 
 I will be prepairing a package for people to download all of the necessary software and plugins to implement CRC on 
