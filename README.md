@@ -16,7 +16,7 @@ adopt the currency.
 I will be preparing a package for people to download all of the necessary software and plugins to implement CRC on 
 their own Minecraft servers soon. Please check back soon.
 
-10 Coins Per Block-
-5 Minutes Between Blocks
-100,000,000 Total Coins
-Difficulty Adjustment Every 1 Day
+* 10 Coins Per Block
+* 5 Minutes Between Blocks
+* 100,000,000 Total Coins
+* Difficulty Adjustment Every 1 Day
