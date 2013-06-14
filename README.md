@@ -1,7 +1,22 @@
 CraftCoin (CRC)
+===============
 
-SEE README FOR COMPLETE INFO
+CraftCoin is a cryptocurrency based on Litecoin. CraftCoin was designed to be a portable in-game currency for 
+Minecraft servers. The currency is used to buy in-game items on minecraft servers, and can be instantly transferred
+to any other Minecraft server that supports CraftCoin.  The reason this coin was made is: Prior to the spike in value 
+of LTC, I ran a successful Minecraft server that used LTC as an in-game currency. The sudden spike in value caused a 
+"bank run" and suddenly people stopped playing on the server due to hyper-inflation. This coin aims to solve this 
+problem, since the value of a CraftCoin will be based on what players are willing to pay for in-game items, rather than
+being tied to a coin with fluctuating value. CraftCoin is not intended to be a competitor with Bitcoin, Litecoin, or 
+any other currency. Its one and only purpose is simply being a game currency that is protected from wild price swings 
+that cause inflation/deflation on minecraft servers, and yet remains portable across any group of servers that wish to
+adopt the currency.
 
-CraftCoin (CRC) Is a portable Minecraft game currency based on Litecoin. It is not intended to be a competitor with
-any other chain, but rather is simply a game currency that can be mined or purchased with other cryptocurrencies, and 
-is portable to any other minecraft server that choses to adopt and use the game currency. 
+
+I will be preparing a package for people to download all of the necessary software and plugins to implement CRC on 
+their own Minecraft servers soon. Please check back soon.
+
+10 Coins Per Block-
+5 Minutes Between Blocks
+100,000,000 Total Coins
+Difficulty Adjustment Every 1 Day
