@@ -20,3 +20,6 @@ their own Minecraft servers soon. Please check back soon.
 * 5 Minutes Between Blocks
 * 100,000,000 Total Coins
 * Difficulty Adjustment Every 1 Day
+
+
+Visit us at http://craftcoin.net
