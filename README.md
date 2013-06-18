@@ -21,5 +21,6 @@ their own Minecraft servers soon. Please check back soon.
 * 100,000,000 Total Coins
 * Difficulty Adjustment Every 1 Day
 
+SEE THE FAQ AT  - - http://craftcoin.net/faq.html
 
-Visit us at http://craftcoin.net
+Website http://craftcoin.net
