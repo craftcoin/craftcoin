@@ -320,7 +320,7 @@ Value GetNetworkHashPS(int lookup) {
 
     // If lookup is -1, then use blocks since last difficulty change.
     if (lookup <= 0)
-        lookup = pindexBest->nHeight % 2016 + 1;
+        lookup = pindexBest->nHeight % 280 + 1;
 
     // If lookup is larger than chain, then set it to chain length.
     if (lookup > pindexBest->nHeight)
@@ -344,7 +344,7 @@ Value getnetworkhashps(const Array& params, bool fHelp)
             "Returns the estimated network hashes per second based on the last 120 blocks.\n"
             "Pass in [blocks] to override # of blocks, -1 specifies since last difficulty change.");
 
-    return GetNetworkHashPS(params.size() > 0 ? params[0].get_int() : 120);
+    return GetNetworkHashPS(params.size() > 0 ? params[0].get_int() : 280);
 }
 
 
