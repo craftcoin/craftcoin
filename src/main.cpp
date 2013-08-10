@@ -833,13 +833,13 @@ int64 static GetBlockValue(int nHeight, int64 nFees)
     return nSubsidy + nFees;
 }
 
-static const int64 nTargetTimespan = 1 * 24 * 60 * 60; // CraftCoin: 1 days
+static const int64 nTargetTimespan = 1 * 60 * 60; // CraftCoin: 1 hour
 static const int64 nTargetSpacing = 300; // CraftCoin: 5 minute blocks
 static const int64 nInterval = nTargetTimespan / nTargetSpacing;
 
 // Thanks: Balthazar for suggesting the following fix
 // https://bitcointalk.org/index.php?topic=182430.msg1904506#msg1904506
-static const int64 nReTargetHistoryFact = 4; // look at 4 times the retarget
+static const int64 nReTargetHistoryFact = 6; // look at 6 times the retarget
                                              // interval into the block history
 
 //
@@ -857,10 +857,10 @@ unsigned int ComputeMinWork(unsigned int nBase, int64 nTime)
     bnResult.SetCompact(nBase);
     while (nTime > 0 && bnResult < bnProofOfWorkLimit)
     {
-        // Maximum 400% adjustment...
-        bnResult *= 4;
-        // ... in best-case exactly 4-times-normal target time
-        nTime -= nTargetTimespan*4;
+        // Maximum 200% adjustment...
+        bnResult *= 2;
+        // ... in best-case exactly 2-times-normal target time
+        nTime -= nTargetTimespan*2;
     }
     if (bnResult > bnProofOfWorkLimit)
         bnResult = bnProofOfWorkLimit;
