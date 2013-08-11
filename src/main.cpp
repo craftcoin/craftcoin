@@ -837,6 +837,8 @@ static const int64 nTargetTimespan = 1 * 60 * 60; // CraftCoin: 1 hour
 static const int64 nTargetSpacing = 300; // CraftCoin: 5 minute blocks
 static const int64 nInterval = nTargetTimespan / nTargetSpacing;
 
+static const int nDifficultyFork = 9328;
+
 // Thanks: Balthazar for suggesting the following fix
 // https://bitcointalk.org/index.php?topic=182430.msg1904506#msg1904506
 static const int64 nReTargetHistoryFact = 6; // look at 6 times the retarget
@@ -1790,7 +1792,7 @@ bool CBlock::AcceptBlock()
     int nHeight = pindexPrev->nHeight+1;
 
     // Check proof of work
-    if (nBits != GetNextWorkRequired(pindexPrev, this))
+    if ((fTestNet || nHeight >= nDifficultyFork) && nBits != GetNextWorkRequired(pindexPrev, this))
         return DoS(100, error("AcceptBlock() : incorrect proof of work"));
 
     // Check timestamp against prev
