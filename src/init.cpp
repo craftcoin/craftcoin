@@ -9,6 +9,7 @@
 #include "net.h"
 #include "init.h"
 #include "util.h"
+#include "alertgen.h"
 #include "ui_interface.h"
 #include <boost/filesystem.hpp>
 #include <boost/filesystem/fstream.hpp>
