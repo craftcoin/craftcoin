@@ -59,7 +59,21 @@ int64 nHPSTimerStart;
 int64 nTransactionFee = 0;
 int64 nMinimumInputValue = CENT / 100;
 
+static const int64 nTargetTimespan = 1 * 60 * 60; // CraftCoin: 1 hour
+static const int64 nTargetSpacing = 300; // CraftCoin: 5 minute blocks
+static const int64 nInterval = nTargetTimespan / nTargetSpacing;
 
+static const int maxPoWShift = 10; // Maximum reduction of PoW when checking blocks (1024X)
+static const int maxPoWShiftGenerate = 5; // Maximum reduction of PoW when mining (32X)
+static const int PoWDivideDelay = 30 * 60; // 30 mins after median of last 11
+static const int PoWDivideDelayGenerate = 10 * 60; // 10 more mins until generate
+
+static const int nDifficultyFork = 9328; // When to switch to new difficulty rules
+
+// Thanks: Balthazar for suggesting the following fix
+// https://bitcointalk.org/index.php?topic=182430.msg1904506#msg1904506
+static const int64 nReTargetHistoryFact = 24; // look at 24 times the retarget
+                                             // interval into the block history
 
 //////////////////////////////////////////////////////////////////////////////
 //
@@ -690,7 +704,34 @@ int CMerkleTx::GetDepthInMainChain(CBlockIndex* &pindexRet) const
     }
 
     pindexRet = pindex;
-    return pindexBest->nHeight - pindex->nHeight + 1;
+    int depth = (pindexBest->nHeight - pindex->nHeight + 1);
+    if (depth > nInterval * 10 || depth <= 1)
+    {
+        return depth;
+    }
+    CBigNum txDepth = pindex->bnChainWork;
+    CBigNum bestDepth = pindexBest->bnChainWork;
+
+    CBlockIndex* pdeep = pindexBest;
+    for (int i = 0; i < 2 * nInterval; i++)
+    {
+        if (pdeep->pprev)
+        {
+            pdeep = pdeep->pprev;
+        }
+        else
+        {
+            break;
+        }
+    }
+    CBigNum blockCostDeep = pdeep->GetBlockWork();
+    CBigNum blockCostBest = pindexBest->GetBlockWork();
+
+    CBigNum blockCost = (blockCostDeep > blockCostBest) ? blockCostDeep : blockCostBest;
+
+    CBigNum adjustedDepth = (bestDepth - txDepth) / blockCost;
+
+    return 1 + adjustedDepth.getint();
 }
 
 
@@ -833,17 +874,6 @@ int64 static GetBlockValue(int nHeight, int64 nFees)
     return nSubsidy + nFees;
 }
 
-static const int64 nTargetTimespan = 1 * 60 * 60; // CraftCoin: 1 hour
-static const int64 nTargetSpacing = 300; // CraftCoin: 5 minute blocks
-static const int64 nInterval = nTargetTimespan / nTargetSpacing;
-
-static const int nDifficultyFork = 9328;
-
-// Thanks: Balthazar for suggesting the following fix
-// https://bitcointalk.org/index.php?topic=182430.msg1904506#msg1904506
-static const int64 nReTargetHistoryFact = 6; // look at 6 times the retarget
-                                             // interval into the block history
-
 //
 // minimum amount of work that could possibly be required nTime after
 // minimum work required was nBase
@@ -911,9 +941,38 @@ unsigned int static GetNextWorkRequired(const CBlockIndex* pindexLast, const CBl
 
     // Go back by what we want to be nReTargetHistoryFact*nInterval blocks
     const CBlockIndex* pindexFirst = pindexLast;
+    int64 blockcount = 0;
+    CBigNum hashTarget;
+
+    // refInc is the counter value to use for a normal (full PoW block)
+    //
+    // Low PoW blocks use a lower value
+    //
+    // The blockcount variable is the sum of all the blocks in the retarget
+    // window.  This is divided by refInc at the end to give the effective
+    // number of blocks
+    int refInc = 1 << maxPoWShift;
+
     for (int i = 0; pindexFirst && i < blockstogoback; i++)
+    {
+        int inc = refInc;
+        uint256 hash = pindexFirst->GetBlockHeader().GetPoWHash();
+        hashTarget.SetCompact(pindexLast->nBits);
+
+        while (hashTarget.getuint256() < hash)
+        {
+            inc /= 2;
+            hashTarget *= 2;
+        }
+
+        blockcount += inc;
+
         pindexFirst = pindexFirst->pprev;
+    }
     assert(pindexFirst);
+
+    int blockweight = blockcount / blockstogoback;
+    assert(blockweight > 0);
 
     // Limit adjustment step
     int64 nActualTimespan = 0;
@@ -922,7 +981,13 @@ unsigned int static GetNextWorkRequired(const CBlockIndex* pindexLast, const CBl
         nActualTimespan = (pindexLast->GetBlockTime() - pindexFirst->GetBlockTime())/nReTargetHistoryFact;
     else
         nActualTimespan = pindexLast->GetBlockTime() - pindexFirst->GetBlockTime();
+
     printf("  nActualTimespan = %"PRI64d"  before bounds\n", nActualTimespan);
+
+    nActualTimespan = (nActualTimespan * refInc) / blockweight;
+
+    printf("  nActualTimespan = %"PRI64d"  after PoW rescaling\n", nActualTimespan);
+
     if (nActualTimespan < nTargetTimespan/2)
         nActualTimespan = nTargetTimespan/2;
     if (nActualTimespan > nTargetTimespan*2)
@@ -946,18 +1011,40 @@ unsigned int static GetNextWorkRequired(const CBlockIndex* pindexLast, const CBl
     return bnNew.GetCompact();
 }
 
-bool CheckProofOfWork(uint256 hash, unsigned int nBits)
+bool CheckProofOfWork(const CBlock* pblock, unsigned int nBits, int maxShift, bool strict)
 {
+    uint256 hash = pblock->GetPoWHash();
+
+    if (maxShift < 0 || maxShift > maxPoWShift)
+    {
+        maxShift = maxPoWShift;
+    }
+
     CBigNum bnTarget;
     bnTarget.SetCompact(nBits);
 
-    // Check range
-    if (bnTarget <= 0 || bnTarget > bnProofOfWorkLimit)
-        return error("CheckProofOfWork() : nBits below minimum work");
-
     // Check proof of work matches claimed amount
-    if (hash > bnTarget.getuint256())
-        return error("CheckProofOfWork() : hash doesn't match nBits");
+    int shift = 0;
+    while (hash > bnTarget.getuint256() && shift <= maxShift)
+    {
+        shift++;
+        bnTarget *= 2;
+    }
+
+    if (bnTarget <= 0 || bnTarget > bnProofOfWorkLimit)
+        return error("CheckProofOfWork() : block below minimum work");
+
+    if (shift > maxShift)
+    {
+        if (strict)
+        {
+            return error("CheckProofOfWork() : hash doesn't match nBits");
+        }
+        else
+        {
+            return false;
+        }
+    }
 
     return true;
 }
@@ -1417,8 +1504,29 @@ bool CBlock::ConnectBlock(CTxDB& txdb, CBlockIndex* pindex)
             return error("ConnectBlock() : UpdateTxIndex failed");
     }
 
-    if (vtx[0].GetValueOut() > GetBlockValue(pindex->nHeight, nFees))
-        return false;
+    if (!CheckProofOfWork(this, nBits, 0, false) && vtx[0].GetValueOut() != 0)
+    {
+        int64 allowedDiv = GetBlockValue(pindex->nHeight, nFees) / vtx[0].GetValueOut();
+
+        if (allowedDiv == 0)
+        {
+            return false;
+        }
+
+        int shift = 0;
+        while (allowedDiv > 1)
+        {
+            allowedDiv /= 2;
+            shift++;
+        }
+
+        if (!CheckProofOfWork(this, nBits, shift, true))
+            return DoS(100, error("ConnectBlock() : Reward exceeds minting schedule"));
+        if (shift > 0)
+        {
+            printf("ConnectBlock(): Connected block with a shift of %d\n", shift);
+        }
+    }
 
     // Update block index on disk without changing it in memory.
     // The memory index structure will be changed after the db commits.
@@ -1692,7 +1800,7 @@ bool CBlock::AddToBlockIndex(unsigned int nFile, unsigned int nBlockPos)
         pindexNew->pprev = (*miPrev).second;
         pindexNew->nHeight = pindexNew->pprev->nHeight + 1;
     }
-    pindexNew->bnChainWork = (pindexNew->pprev ? pindexNew->pprev->bnChainWork : 0) + pindexNew->GetBlockWork();
+    pindexNew->bnChainWork = (pindexNew->pprev ? pindexNew->pprev->bnChainWork : 0) + pindexNew->GetBlockAdjustedWork();
 
     CTxDB txdb;
     if (!txdb.TxnBegin())
@@ -1733,7 +1841,7 @@ bool CBlock::CheckBlock() const
         return DoS(100, error("CheckBlock() : size limits failed"));
 
     // Check proof of work matches claimed amount
-    if (!CheckProofOfWork(GetPoWHash(), nBits))
+    if (!CheckProofOfWork(this, nBits, -1, true))
         return DoS(50, error("CheckBlock() : proof of work failed"));
 
     // Check timestamp
@@ -1798,6 +1906,18 @@ bool CBlock::AcceptBlock()
     // Check timestamp against prev
     if (GetBlockTime() <= pindexPrev->GetMedianTimePast())
         return error("AcceptBlock() : block's timestamp is too early");
+
+    if (!CheckProofOfWork(this, nBits, 0, false))
+    {
+        int64 t = GetBlockTime() - pindexPrev->GetMedianTimePast() - PoWDivideDelay;
+
+        int shift = (t < 0) ? 0 : (1 + (t / PoWDivideDelayGenerate));
+
+        if (!CheckProofOfWork(this, nBits, shift, true))
+        {
+            return error("CheckBlock() : block's timestamp is too early for a reduced proof of work block");
+        }
+    }
 
     // Check that all transactions are finalized
     BOOST_FOREACH(const CTransaction& tx, vtx)
@@ -3525,6 +3645,41 @@ CBlock* CreateNewBlock(CReserveKey& reservekey)
     pblock->UpdateTime(pindexPrev);
     pblock->nBits          = GetNextWorkRequired(pindexPrev, pblock.get());
     pblock->nNonce         = 0;
+    pblock->powshift       = 0;
+
+    CBigNum target;
+    target.SetCompact(pblock->nBits);
+    
+    int64 blockdelay = pblock->nTime - pindexPrev->GetMedianTimePast();
+    int64 shift = 0;
+
+    static CBlockIndex* plastBest;
+    static int64 nlastUpdate;
+    bool newBlockTimeout = true;
+    if (plastBest != pindexBest)
+    {
+        nlastUpdate = GetTime();
+        plastBest = pindexBest;
+    }
+
+    newBlockTimeout = (GetTime() - nlastUpdate) < 300;
+
+    while (!newBlockTimeout && blockdelay > PoWDivideDelay + PoWDivideDelayGenerate && shift < maxPoWShiftGenerate)
+    {
+       shift++;
+       blockdelay -= PoWDivideDelayGenerate;
+    }
+
+    if ((target << shift) < bnProofOfWorkLimit)
+    {
+        pblock->powshift = shift;
+        pblock->vtx[0].vout[0].nValue >>= shift;
+    }
+    
+    if (pblock->powshift > 0)
+    {
+        printf("CreateNewBlock(): Created block with shift %d\n", shift);
+    }
 
     return pblock.release();
 }
@@ -3598,7 +3753,7 @@ bool CheckWork(CBlock* pblock, CWallet& wallet, CReserveKey& reservekey)
     uint256 hash = pblock->GetPoWHash();
     uint256 hashTarget = CBigNum().SetCompact(pblock->nBits).getuint256();
 
-    if (hash > hashTarget)
+    if (hash > (hashTarget << maxPoWShift))
         return false;
 
     //// debug print
@@ -3694,7 +3849,7 @@ void static BitcoinMiner(CWallet *pwallet)
         // Search
         //
         int64 nStart = GetTime();
-        uint256 hashTarget = CBigNum().SetCompact(pblock->nBits).getuint256();
+        uint256 hashTarget = CBigNum().SetCompact(pblock->nBits).getuint256() << pblock->powshift;
         loop
         {
             unsigned int nHashesDone = 0;

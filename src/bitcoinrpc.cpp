@@ -1885,7 +1885,8 @@ Value getworkex(const Array& params, bool fHelp)
         static int64 nStart;
         static CBlock* pblock;
         if (pindexPrev != pindexBest ||
-            (nTransactionsUpdated != nTransactionsUpdatedLast && GetTime() - nStart > 60))
+            (nTransactionsUpdated != nTransactionsUpdatedLast && GetTime() - nStart > 60) ||
+            (GetTime() - nStart > 300))
         {
             if (pindexPrev != pindexBest)
             {
@@ -1923,7 +1924,7 @@ Value getworkex(const Array& params, bool fHelp)
         char phash1[64];
         FormatHashBuffers(pblock, pmidstate, pdata, phash1);
 
-        uint256 hashTarget = CBigNum().SetCompact(pblock->nBits).getuint256();
+        uint256 hashTarget = CBigNum().SetCompact(pblock->nBits).getuint256() << pblock->powshift;
 
         CTransaction coinbaseTx = pblock->vtx[0];
         std::vector<uint256> merkle = pblock->GetMerkleBranch(0);
@@ -2017,7 +2018,8 @@ Value getwork(const Array& params, bool fHelp)
         static int64 nStart;
         static CBlock* pblock;
         if (pindexPrev != pindexBest ||
-            (nTransactionsUpdated != nTransactionsUpdatedLast && GetTime() - nStart > 60))
+            (nTransactionsUpdated != nTransactionsUpdatedLast && GetTime() - nStart > 60) ||
+            (GetTime() - nStart > 300))
         {
             if (pindexPrev != pindexBest)
             {
@@ -2055,7 +2057,7 @@ Value getwork(const Array& params, bool fHelp)
         char phash1[64];
         FormatHashBuffers(pblock, pmidstate, pdata, phash1);
 
-        uint256 hashTarget = CBigNum().SetCompact(pblock->nBits).getuint256();
+        uint256 hashTarget = CBigNum().SetCompact(pblock->nBits).getuint256() << pblock->powshift;
 
         Object result;
         result.push_back(Pair("midstate", HexStr(BEGIN(pmidstate), END(pmidstate)))); // deprecated
@@ -2144,7 +2146,8 @@ Value getblocktemplate(const Array& params, bool fHelp)
         static int64 nStart;
         static CBlock* pblock;
         if (pindexPrev != pindexBest ||
-            (nTransactionsUpdated != nTransactionsUpdatedLast && GetTime() - nStart > 5))
+            (nTransactionsUpdated != nTransactionsUpdatedLast && GetTime() - nStart > 5) ||
+            (GetTime() - nStart > 300))
         {
             nTransactionsUpdatedLast = nTransactionsUpdated;
             pindexPrev = pindexBest;
@@ -2208,7 +2211,7 @@ Value getblocktemplate(const Array& params, bool fHelp)
         Object aux;
         aux.push_back(Pair("flags", HexStr(COINBASE_FLAGS.begin(), COINBASE_FLAGS.end())));
 
-        uint256 hashTarget = CBigNum().SetCompact(pblock->nBits).getuint256();
+        uint256 hashTarget = CBigNum().SetCompact(pblock->nBits).getuint256() << pblock->powshift;
 
         static Array aMutable;
         if (aMutable.empty())
