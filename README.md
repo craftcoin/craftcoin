@@ -19,7 +19,7 @@ their own Minecraft servers soon. Please check back soon.
 * 10 Coins Per Block
 * 5 Minutes Between Blocks
 * 100,000,000 Total Coins
-* Difficulty Adjustment Every 1 Day
+* Difficulty Adjustment Every 12 Blocks
 
 SEE THE FAQ AT  - - http://craftcoin.net/faq.html
 
