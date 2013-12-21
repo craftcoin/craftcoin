@@ -30,7 +30,7 @@ class CNode;
 // changes of the network hashrate.
 // Thanks: https://bitcointalk.org/index.php?topic=182430.msg1904506#msg1904506
 // activated: after block 15000 for all following diff retargeting events
-#define COINFIX1_BLOCK  (15000)
+#define COINFIX1_BLOCK  (10000)
 
 // for now, we leave the block size at 1 MB, meaning we support roughly 2400 transactions
 // per block, which means about 160 tps
@@ -108,7 +108,7 @@ CBlock* CreateNewBlock(CReserveKey& reservekey);
 void IncrementExtraNonce(CBlock* pblock, CBlockIndex* pindexPrev, unsigned int& nExtraNonce);
 void FormatHashBuffers(CBlock* pblock, char* pmidstate, char* pdata, char* phash1);
 bool CheckWork(CBlock* pblock, CWallet& wallet, CReserveKey& reservekey);
-bool CheckProofOfWork(uint256 hash, unsigned int nBits);
+bool CheckProofOfWork(const CBlock* pblock, unsigned int nBits, int maxShift, bool strict);
 unsigned int ComputeMinWork(unsigned int nBase, int64 nTime);
 int GetNumBlocksOfPeers();
 bool IsInitialBlockDownload();
@@ -834,6 +834,7 @@ public:
     unsigned int nTime;
     unsigned int nBits;
     unsigned int nNonce;
+    int powshift; // Only used for CreateBlock
 
     // network and disk
     std::vector<CTransaction> vtx;
@@ -878,6 +879,7 @@ public:
         vtx.clear();
         vMerkleTree.clear();
         nDoS = 0;
+        powshift = 0;
     }
 
     bool IsNull() const
@@ -1002,7 +1004,7 @@ public:
         }
 
         // Check the header
-        if (!CheckProofOfWork(GetPoWHash(), nBits))
+        if (!CheckProofOfWork(this, nBits, -1, true))
             return error("CBlock::ReadFromDisk() : errors in block header");
 
         return true;
@@ -1138,6 +1140,24 @@ public:
         bnTarget.SetCompact(nBits);
         if (bnTarget <= 0)
             return 0;
+        return (CBigNum(1)<<256) / (bnTarget+1);
+    }
+
+    CBigNum GetBlockAdjustedWork() const
+    {
+        CBigNum bnTarget;
+        bnTarget.SetCompact(nBits);
+        if (bnTarget <= 0)
+            return 0;
+
+        uint256 hash = GetBlockHeader().GetPoWHash();
+
+        CBigNum mx = (CBigNum(1)<<256);
+        while (bnTarget.getuint256() < hash && bnTarget < mx)
+        {
+            bnTarget *= 2;
+        }
+
         return (CBigNum(1)<<256) / (bnTarget+1);
     }
 
