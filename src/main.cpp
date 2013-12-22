@@ -833,16 +833,12 @@ int64 static GetBlockValue(int nHeight, int64 nFees)
     return nSubsidy + nFees;
 }
 
-static const int64 nTargetTimespan = 1 * 60 * 60; // CraftCoin: 1 hour
-static const int64 nTargetSpacing = 300; // CraftCoin: 5 minute blocks
-static const int64 nInterval = nTargetTimespan / nTargetSpacing;
+static int64 nTargetTimespan = 24 * 60 * 60;               // 24 hour re-target goal
+static int64 nTargetSpacing = 5 * 60;                      // 5 minute block goal
+static int64 nInterval = nTargetTimespan / nTargetSpacing; // 288 blocks actual re-target
+static int64 nReTargetHistoryFact = 4;                     // 1152 block sample for re-target
+// static const int nDifficultyFork = 9328;
 
-static const int nDifficultyFork = 9328;
-
-// Thanks: Balthazar for suggesting the following fix
-// https://bitcointalk.org/index.php?topic=182430.msg1904506#msg1904506
-static const int64 nReTargetHistoryFact = 6; // look at 6 times the retarget
-                                             // interval into the block history
 
 //
 // minimum amount of work that could possibly be required nTime after
@@ -859,10 +855,10 @@ unsigned int ComputeMinWork(unsigned int nBase, int64 nTime)
     bnResult.SetCompact(nBase);
     while (nTime > 0 && bnResult < bnProofOfWorkLimit)
     {
-        // Maximum 200% adjustment...
-        bnResult *= 2;
-        // ... in best-case exactly 2-times-normal target time
-        nTime -= nTargetTimespan*2;
+        // Maximum 400% adjustment...
+        bnResult *= 4;
+        // ... in best-case exactly 4-times-normal target time
+        nTime -= nTargetTimespan*4;
     }
     if (bnResult > bnProofOfWorkLimit)
         bnResult = bnProofOfWorkLimit;
@@ -923,10 +919,10 @@ unsigned int static GetNextWorkRequired(const CBlockIndex* pindexLast, const CBl
     else
         nActualTimespan = pindexLast->GetBlockTime() - pindexFirst->GetBlockTime();
     printf("  nActualTimespan = %"PRI64d"  before bounds\n", nActualTimespan);
-    if (nActualTimespan < nTargetTimespan/2)
-        nActualTimespan = nTargetTimespan/2;
-    if (nActualTimespan > nTargetTimespan*2)
-        nActualTimespan = nTargetTimespan*2;
+    if (nActualTimespan < nTargetTimespan/4)
+        nActualTimespan = nTargetTimespan/4;
+    if (nActualTimespan > nTargetTimespan*4)
+        nActualTimespan = nTargetTimespan*4;
 
     // Retarget
     CBigNum bnNew;
@@ -1792,7 +1788,8 @@ bool CBlock::AcceptBlock()
     int nHeight = pindexPrev->nHeight+1;
 
     // Check proof of work
-    if ((fTestNet || nHeight >= nDifficultyFork) && nBits != GetNextWorkRequired(pindexPrev, this))
+    //if ((fTestNet || nHeight >= nDifficultyFork) && nBits != GetNextWorkRequired(pindexPrev, this))
+    if (nBits != GetNextWorkRequired(pindexPrev, this))
         return DoS(100, error("AcceptBlock() : incorrect proof of work"));
 
     // Check timestamp against prev
