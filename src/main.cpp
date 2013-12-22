@@ -828,7 +828,12 @@ uint256 static GetOrphanRoot(const CBlock* pblock)
 
 int64 static GetBlockValue(int nHeight, int64 nFees)
 {
-    int64 nSubsidy = 10 * COIN;
+    // reduce reward by a factor of five after block 35000
+    // results in same reward per hour after blocktime change
+    if(nHeight < 35000)
+        int64 nSubsidy = 10 * COIN;
+    else
+        int64 nSubsidy = 2 * COIN;  
 
     return nSubsidy + nFees;
 }
@@ -890,7 +895,10 @@ unsigned int static GetNextWorkRequired(const CBlockIndex* pindexLast, const CBl
         nTargetTimespan = 60 * 60;                    // 1 hour re-target goal
         nTargetSpacing = 60;                          // 1 minute block goal
         nInterval = nTargetTimespan / nTargetSpacing; // 60 blocks actual re-target
-        nReTargetHistoryFact = 4;                     // 240 block sample for re-target
+        if((pindexLast->nHeight+1) < 35240)
+            nReTargetHistoryFact = 1;                 // 60 blocks sample for first 4 re-targets
+        else
+            nReTargetHistoryFact = 4;                 // 240 block sample for re-target
     }
 
     // Only change once per interval
@@ -940,14 +948,14 @@ unsigned int static GetNextWorkRequired(const CBlockIndex* pindexLast, const CBl
         nActualTimespan = pindexLast->GetBlockTime() - pindexFirst->GetBlockTime();
     printf("  nActualTimespan = %"PRI64d"  before bounds\n", nActualTimespan);
 
-    if((pindexLast->nHeight+1) > 35000)
+    if((pindexLast->nHeight+1) >= 35000)
     {
         if (nActualTimespan < nTargetTimespan/1.25)
             nActualTimespan = nTargetTimespan/1.25;
         if (nActualTimespan > nTargetTimespan*1.25)
             nActualTimespan = nTargetTimespan*1.25;
     }
-    else if((pindexLast->nHeight+1) > 9328)
+    else if((pindexLast->nHeight+1) >= 9328)
     {
         if (nActualTimespan < nTargetTimespan/2)
             nActualTimespan = nTargetTimespan/2;
