@@ -873,6 +873,26 @@ unsigned int static GetNextWorkRequired(const CBlockIndex* pindexLast, const CBl
     if (pindexLast == NULL)
         return nProofOfWorkLimit;
 
+    // Previous fix attempts sudden changes will be contained here.
+    if((pindexLast->nHeight+1) >= 9328)
+    {
+        nTargetTimespan = 60 * 60;                    // 1 hour re-target goal
+        nTargetSpacing = 5 * 60;                      // 5 minute block goal
+        nInterval = nTargetTimespan / nTargetSpacing; // 12 blocks actual re-target
+        nReTargetHistoryFact = 6;                     // 72 block sample for re-target
+    }
+
+    // From block 35000, reassess the difficulty every 60 blocks instead of the original 288
+    // Blocktime is also decreased to 1 minute for faster changes.
+    // based in my shitty drunken math this should happen within a month or two.
+    if((pindexLast->nHeight+1) >= 35000)
+    {
+        nTargetTimespan = 60 * 60;                    // 1 hour re-target goal
+        nTargetSpacing = 60;                          // 1 minute block goal
+        nInterval = nTargetTimespan / nTargetSpacing; // 60 blocks actual re-target
+        nReTargetHistoryFact = 4;                     // 240 block sample for re-target
+    }
+
     // Only change once per interval
     if ((pindexLast->nHeight+1) % nInterval != 0)
     {
@@ -919,10 +939,29 @@ unsigned int static GetNextWorkRequired(const CBlockIndex* pindexLast, const CBl
     else
         nActualTimespan = pindexLast->GetBlockTime() - pindexFirst->GetBlockTime();
     printf("  nActualTimespan = %"PRI64d"  before bounds\n", nActualTimespan);
-    if (nActualTimespan < nTargetTimespan/4)
-        nActualTimespan = nTargetTimespan/4;
-    if (nActualTimespan > nTargetTimespan*4)
-        nActualTimespan = nTargetTimespan*4;
+
+    if((pindexLast->nHeight+1) > 35000)
+    {
+        if (nActualTimespan < nTargetTimespan/1.25)
+            nActualTimespan = nTargetTimespan/1.25;
+        if (nActualTimespan > nTargetTimespan*1.25)
+            nActualTimespan = nTargetTimespan*1.25;
+    }
+    else if((pindexLast->nHeight+1) > 9328)
+    {
+        if (nActualTimespan < nTargetTimespan/2)
+            nActualTimespan = nTargetTimespan/2;
+        if (nActualTimespan > nTargetTimespan*2)
+            nActualTimespan = nTargetTimespan*2;
+    }
+    else
+    {
+        if (nActualTimespan < nTargetTimespan/4)
+            nActualTimespan = nTargetTimespan/4;
+        if (nActualTimespan > nTargetTimespan*4)
+            nActualTimespan = nTargetTimespan*4;
+    }
+  
 
     // Retarget
     CBigNum bnNew;
@@ -2402,6 +2441,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         }
 
         int64 nTime;
+        bool badVersion = false;
         CAddress addrMe;
         CAddress addrFrom;
         uint64 nNonce = 1;
@@ -2415,6 +2455,22 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
             return false;
         }
 
+        // Start disconnecting older client versions from 2014.01.05-00:00:00 UTC (Mungday)
+        if(nTime >= 1388880000)
+        {
+            if(pfrom->nVersion < 70000)
+            {
+                badVersion = true;
+            }
+        }
+
+        if(badVersion)
+        {
+            printf("partner %s using obsolete version %i; disconnecting\n", pfrom->addr.ToString().c_str(), pfrom->nVersion);
+            pfrom->fDisconnect = true;
+            return false;
+        }
+ 
         if (pfrom->nVersion == 10300)
             pfrom->nVersion = 300;
         if (!vRecv.empty())
