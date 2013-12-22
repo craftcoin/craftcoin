@@ -828,12 +828,12 @@ uint256 static GetOrphanRoot(const CBlock* pblock)
 
 int64 static GetBlockValue(int nHeight, int64 nFees)
 {
+    int64 nSubsidy = 10 * COIN;
+    
     // reduce reward by a factor of five after block 35000
     // results in same reward per hour after blocktime change
-    if(nHeight < 35000)
-        int64 nSubsidy = 10 * COIN;
-    else
-        int64 nSubsidy = 2 * COIN;  
+    if(nHeight >= 35000)
+        nSubsidy = 2 * COIN;  
 
     return nSubsidy + nFees;
 }
