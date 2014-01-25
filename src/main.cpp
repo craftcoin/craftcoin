@@ -830,9 +830,9 @@ int64 static GetBlockValue(int nHeight, int64 nFees)
 {
     int64 nSubsidy = 10 * COIN;
     
-    // reduce reward by a factor of five after block 35000
+    // reduce reward by a factor of five after block 32000
     // results in same reward per hour after blocktime change
-    if(nHeight >= 35000)
+    if(nHeight >= 32000)
         nSubsidy = 2 * COIN;  
 
     return nSubsidy + nFees;
@@ -887,10 +887,10 @@ unsigned int static GetNextWorkRequired(const CBlockIndex* pindexLast, const CBl
         nReTargetHistoryFact = 6;                     // 72 block sample for re-target
     }
 
-    // From block 35000, reassess the difficulty every 60 blocks instead of the original 288
+    // From block 32000, reassess the difficulty every 60 blocks instead of the original 288
     // Blocktime is also decreased to 1 minute for faster changes.
     // based in my shitty drunken math this should happen within a month or two.
-    if((pindexLast->nHeight+1) >= 35000)
+    if((pindexLast->nHeight+1) >= 32000)
     {
         nTargetTimespan = 60 * 60;                    // 1 hour re-target goal
         nTargetSpacing = 60;                          // 1 minute block goal
@@ -948,7 +948,7 @@ unsigned int static GetNextWorkRequired(const CBlockIndex* pindexLast, const CBl
         nActualTimespan = pindexLast->GetBlockTime() - pindexFirst->GetBlockTime();
     printf("  nActualTimespan = %"PRI64d"  before bounds\n", nActualTimespan);
 
-    if((pindexLast->nHeight+1) >= 35000)
+    if((pindexLast->nHeight+1) >= 32000)
     {
         if (nActualTimespan < nTargetTimespan/1.25)
             nActualTimespan = nTargetTimespan/1.25;
@@ -2463,8 +2463,8 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
             return false;
         }
 
-        // Start disconnecting older client versions from 2014.01.05-00:00:00 UTC (Mungday)
-        if(nTime >= 1388880000)
+        // Start disconnecting older client versions from 2014.01.31-00:00:00 UTC (Backwards Day)
+        if(nTime >= 1391126400)
         {
             if(pfrom->nVersion < 70000)
             {
