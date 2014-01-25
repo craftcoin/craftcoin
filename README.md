@@ -27,7 +27,7 @@ their own Minecraft servers soon. Please check back soon.
 These changes should result in a more stable, faster blockchain.
 Brought to you by [RazorLove](https://github.com/RazorLove/)
 
-**Old parameters still in place 'til b35000**
+**Old parameters still in place until block 32000**
 * 10 Coins Per Block
 * 5 Minutes Between Blocks
 * 100,000,000 Total Coins
