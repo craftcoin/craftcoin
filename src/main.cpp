@@ -829,20 +829,21 @@ uint256 static GetOrphanRoot(const CBlock* pblock)
 int64 static GetBlockValue(int nHeight, int64 nFees)
 {
     int64 nSubsidy = 10 * COIN;
+    
+    // reduce reward by a factor of five after block 32000
+    // results in same reward per hour after blocktime change
+    if(nHeight >= 32000)
+        nSubsidy = 2 * COIN;  
 
     return nSubsidy + nFees;
 }
 
-static const int64 nTargetTimespan = 1 * 60 * 60; // CraftCoin: 1 hour
-static const int64 nTargetSpacing = 300; // CraftCoin: 5 minute blocks
-static const int64 nInterval = nTargetTimespan / nTargetSpacing;
+static int64 nTargetTimespan = 24 * 60 * 60;               // 24 hour re-target goal
+static int64 nTargetSpacing = 5 * 60;                      // 5 minute block goal
+static int64 nInterval = nTargetTimespan / nTargetSpacing; // 288 blocks actual re-target
+static int64 nReTargetHistoryFact = 4;                     // 1152 block sample for re-target
+// static const int nDifficultyFork = 9328;
 
-static const int nDifficultyFork = 9328;
-
-// Thanks: Balthazar for suggesting the following fix
-// https://bitcointalk.org/index.php?topic=182430.msg1904506#msg1904506
-static const int64 nReTargetHistoryFact = 6; // look at 6 times the retarget
-                                             // interval into the block history
 
 //
 // minimum amount of work that could possibly be required nTime after
@@ -859,10 +860,10 @@ unsigned int ComputeMinWork(unsigned int nBase, int64 nTime)
     bnResult.SetCompact(nBase);
     while (nTime > 0 && bnResult < bnProofOfWorkLimit)
     {
-        // Maximum 200% adjustment...
-        bnResult *= 2;
-        // ... in best-case exactly 2-times-normal target time
-        nTime -= nTargetTimespan*2;
+        // Maximum 400% adjustment...
+        bnResult *= 4;
+        // ... in best-case exactly 4-times-normal target time
+        nTime -= nTargetTimespan*4;
     }
     if (bnResult > bnProofOfWorkLimit)
         bnResult = bnProofOfWorkLimit;
@@ -876,6 +877,29 @@ unsigned int static GetNextWorkRequired(const CBlockIndex* pindexLast, const CBl
     // Genesis block
     if (pindexLast == NULL)
         return nProofOfWorkLimit;
+
+    // Previous fix attempts sudden changes will be contained here.
+    if((pindexLast->nHeight+1) >= 9328)
+    {
+        nTargetTimespan = 60 * 60;                    // 1 hour re-target goal
+        nTargetSpacing = 5 * 60;                      // 5 minute block goal
+        nInterval = nTargetTimespan / nTargetSpacing; // 12 blocks actual re-target
+        nReTargetHistoryFact = 6;                     // 72 block sample for re-target
+    }
+
+    // From block 32000, reassess the difficulty every 60 blocks instead of the original 288
+    // Blocktime is also decreased to 1 minute for faster changes.
+    // based in my shitty drunken math this should happen within a month or two.
+    if((pindexLast->nHeight+1) >= 32000)
+    {
+        nTargetTimespan = 60 * 60;                    // 1 hour re-target goal
+        nTargetSpacing = 60;                          // 1 minute block goal
+        nInterval = nTargetTimespan / nTargetSpacing; // 60 blocks actual re-target
+        if((pindexLast->nHeight+1) < 35240)
+            nReTargetHistoryFact = 1;                 // 60 blocks sample for first 4 re-targets
+        else
+            nReTargetHistoryFact = 4;                 // 240 block sample for re-target
+    }
 
     // Only change once per interval
     if ((pindexLast->nHeight+1) % nInterval != 0)
@@ -923,10 +947,29 @@ unsigned int static GetNextWorkRequired(const CBlockIndex* pindexLast, const CBl
     else
         nActualTimespan = pindexLast->GetBlockTime() - pindexFirst->GetBlockTime();
     printf("  nActualTimespan = %"PRI64d"  before bounds\n", nActualTimespan);
-    if (nActualTimespan < nTargetTimespan/2)
-        nActualTimespan = nTargetTimespan/2;
-    if (nActualTimespan > nTargetTimespan*2)
-        nActualTimespan = nTargetTimespan*2;
+
+    if((pindexLast->nHeight+1) >= 32000)
+    {
+        if (nActualTimespan < nTargetTimespan/1.25)
+            nActualTimespan = nTargetTimespan/1.25;
+        if (nActualTimespan > nTargetTimespan*1.25)
+            nActualTimespan = nTargetTimespan*1.25;
+    }
+    else if((pindexLast->nHeight+1) >= 9328)
+    {
+        if (nActualTimespan < nTargetTimespan/2)
+            nActualTimespan = nTargetTimespan/2;
+        if (nActualTimespan > nTargetTimespan*2)
+            nActualTimespan = nTargetTimespan*2;
+    }
+    else
+    {
+        if (nActualTimespan < nTargetTimespan/4)
+            nActualTimespan = nTargetTimespan/4;
+        if (nActualTimespan > nTargetTimespan*4)
+            nActualTimespan = nTargetTimespan*4;
+    }
+  
 
     // Retarget
     CBigNum bnNew;
@@ -1792,7 +1835,8 @@ bool CBlock::AcceptBlock()
     int nHeight = pindexPrev->nHeight+1;
 
     // Check proof of work
-    if ((fTestNet || nHeight >= nDifficultyFork) && nBits != GetNextWorkRequired(pindexPrev, this))
+    //if ((fTestNet || nHeight >= nDifficultyFork) && nBits != GetNextWorkRequired(pindexPrev, this))
+    if (nBits != GetNextWorkRequired(pindexPrev, this))
         return DoS(100, error("AcceptBlock() : incorrect proof of work"));
 
     // Check timestamp against prev
@@ -2405,6 +2449,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         }
 
         int64 nTime;
+        bool badVersion = false;
         CAddress addrMe;
         CAddress addrFrom;
         uint64 nNonce = 1;
@@ -2418,6 +2463,22 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
             return false;
         }
 
+        // Start disconnecting older client versions from 2014.01.31-00:00:00 UTC (Backwards Day)
+        if(nTime >= 1391126400)
+        {
+            if(pfrom->nVersion < 70000)
+            {
+                badVersion = true;
+            }
+        }
+
+        if(badVersion)
+        {
+            printf("partner %s using obsolete version %i; disconnecting\n", pfrom->addr.ToString().c_str(), pfrom->nVersion);
+            pfrom->fDisconnect = true;
+            return false;
+        }
+ 
         if (pfrom->nVersion == 10300)
             pfrom->nVersion = 300;
         if (!vRecv.empty())

@@ -23,13 +23,19 @@ namespace Checkpoints
     // + Contains no strange transactions
     //
     static MapCheckpoints mapCheckpoints =
-        boost::assign::map_list_of // Yo dawg, this is the secret. Checkpoint 0 hash == Genesis block hash.
+        boost::assign::map_list_of // Fetched from http://crc.cryptocoinexplorer.com/
         (         0, uint256("0x64a9141746cbbe06c7e1a4b7f2abb968ccdeba66cd67c1add1091b29db00578e"))
-        (         2, uint256("0x8c6d02b02c996531baf1f29637cfe122dfffbe900961e9df9f4a12f4a9f42e2e"))
+        (         1, uint256("0xb148d04d286819a2b7b351413803f5119cd99656d4a9858342e823656aff96ce"))
+        (        10, uint256("0x16649f8da56b6c0161c9e311cf50679074cc97e891dcbbd361667f73ff100c9e"))
+        (       100, uint256("0x81cf9a3d580549022b9824d4da2e89cf069d50065ef81db7f1c655431d58c620"))
         (      1000, uint256("0xb2c469e23698d422d82e8a2e0f311b6b9e53fd834b552009479d0fe28abfae7a"))
-        (      2400, uint256("0xe0ffcb739214da82050985be90b20365f0edead5ce3723b959f5ef24478a7e0a"))
-        (      9275, uint256("0xaaccac8516a4c455f80471b868b30aaa2c75d7e897c63ef9953df3f596495cad"))
-        (      9331, uint256("0x8f23149ea07ee5e2fa66c53b814901c279a159a7b71b2b18900b2dd3125cec3f"))
+        (      2500, uint256("0x1fc1b2d0423b749bf57df04f85d54159c5d31c9bfce891f1c9261836e8e1e50d"))
+        (      5000, uint256("0xb60d2946ef3c7a99cfe157326825f5e0a849265a944235834f7d00c4fee454e6"))
+        (      7500, uint256("0xcdc68be30f63273f1caf7ee5dfb4b5a582b517aef1befe2c1ebee0e749a736e2"))
+        (     10000, uint256("0x8716645da048a0580c8b1b41e2c98d4ee64b1ac182bcba279ad94254b68c04d8"))
+        (     15000, uint256("0xf1d1a34dacf4ce0fb555ca4614543277f794b687068aaadc3cd47c96acc96038"))
+        (     20000, uint256("0x1f654ca0134c126ab9b00d705359c4315adf992cfb4c055ff31c0d5dab3ca9a1"))
+        (     24000, uint256("0xc9f7d4742c8320f7f5cb4e32f0485eb0685b16731e3a0fc0845f3e7dfc124acf"))
 
         ;
 
